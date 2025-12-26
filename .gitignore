@@ -4,7 +4,24 @@ venv/
 
 # Python cache
 __pycache__/
-*.pyc
+*.py[cod]
 
 # Environment variables
 .env
+.env.*
+!.env.example
+
+# SQLite databases and instance artifacts
+instance/
+*.db
+
+# Logs
+*.log
+flask.log
+
+# Editors/IDE
+.vscode/
+.idea/
+
+# OS/filesystem
+.DS_Store
