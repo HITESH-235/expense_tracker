@@ -1,29 +1,47 @@
 import os
-
-from dotenv import load_dotenv
 from flask import Flask
-
-from app.config import config_by_name
-from app.db.database import init_app as init_db
+from app.db.database import db
 from app.routes.expense_routes import expense_bp
+from app.models import expense_model
 
+# def create_app():
+# 	print("DB PATH:", os.path.abspath("expenses_db.db"))
+# 	app = Flask(__name__)
 
-def create_app(config_name: str | None = None) -> Flask:
-	load_dotenv()
-	app = Flask(__name__)
+# 	# uniform resource identifier
+# 	app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///expenses_db.db" # relative path where db will be created (same folder)
+# 	# without this app does not know the db it talks to
+# 	app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# 	# Tracks modifications of objects and sends signals when they change -> turned off
 
-	config_name = config_name or os.getenv("FLASK_CONFIG", "default")
-	app.config.from_object(config_by_name.get(config_name, config_by_name["default"]))
+# 	db.init_app(app) # attaches extension(sqalchemy) to flask app
+# 	app.register_blueprint(expense_bp, url_prefix="/api")
 
-	init_db(app)
+# 	# makes app aware of its settings, or make db see the uri
+# 	with app.app_context():
+# 		db.create_all() 
+# 		# searches the classes inherited from db.Model
+# 		# connexts the location as well
+# 		# if file does not exist, runs create table
 	
-	# Import models here so Flask-Migrate can detect them
-	from app.models import expense_model  # noqa: F401
+# 	return app
 
-	app.register_blueprint(expense_bp, url_prefix="/api")
+def create_app():
+    app = Flask(__name__)
 
-	@app.get("/health")
-	def health():  # pragma: no cover - trivial endpoint
-		return {"status": "ok"}
+    BASE_DIR = os.path.abspath(os.getcwd())
+    DB_PATH = os.path.join(BASE_DIR, "expenses_db.db")
 
-	return app
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    db.init_app(app)
+
+    app.register_blueprint(expense_bp)
+    from app.models import expense_model
+
+    with app.app_context():
+        print("CREATING TABLES...")
+        db.create_all()
+
+    return app

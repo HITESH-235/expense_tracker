@@ -1,43 +1,63 @@
-from flask import abort
+"""Controller layer.
 
-from app.schemas.expense_schema import ExpenseSchema
-from app.services import expense_service
-from app.db.database import db
+Responsibility:
+- Receive validated request data from routes.
+- Coordinate service calls.
+- Return API responses.
 
-expense_schema = ExpenseSchema()
-expenses_schema = ExpenseSchema(many=True)
+TODO:
+- Add expense CRUD controller functions.
+"""
 
+from flask import request
+from app.utils.validators import validate_expense_data
+from app.services.expense_service import (
+    create_expense, 
+    get_all_expenses, 
+    get_expense_by_id, 
+    delete_expense_by_id, 
+    update_expense_by_id
+)
 
-def list_expenses():
-	expenses = expense_service.list_expenses()
-	return expenses_schema.dump(expenses), 200
-
-
-def get_expense(expense_id: int):
-	expense = expense_service.get_expense(expense_id)
-	if not expense:
-		abort(404, description="Expense not found")
-	return expense_schema.dump(expense), 200
-
-
-def create_expense(payload: dict):
-	expense = expense_schema.load(payload)
-	created = expense_service.create_expense(expense)
-	return expense_schema.dump(created), 201
-
-
-def update_expense(expense_id: int, payload: dict):
-	expense = expense_service.get_expense(expense_id)
-	if not expense:
-		abort(404, description="Expense not found")
-	expense_schema.load(payload, instance=expense, session=db.session, partial=True)
-	updated = expense_service.update_expense(expense)
-	return expense_schema.dump(updated), 200
+def add_expense():
+    data = request.get_json()
+    
+    # none if no errors, else holds error message
+    error = validate_expense_data(data)
+    if (error): return {"error":error}, 400
+    
+    expense = create_expense(data)
+    return expense.to_dict(), 201
 
 
-def delete_expense(expense_id: int):
-	expense = expense_service.get_expense(expense_id)
-	if not expense:
-		abort(404, description="Expense not found")
-	expense_service.delete_expense(expense)
-	return {}, 204
+def get_expenses():
+    expenses = get_all_expenses()
+    return [e.to_dict() for e in expenses], 200
+
+
+def get_expense(id):
+    expense = get_expense_by_id(id) # returns none if not found
+
+    if not expense: return {"error":"Expense not found"}, 404
+    
+    return expense.to_dict(), 200
+
+
+def delete_expense(id):
+    res = delete_expense_by_id(id) # returns none if not found
+
+    if not res: return {"error":"Expense not found"}, 404
+        
+    return {"message":"Expense deleted"}, 200
+
+
+def update_expense(id):
+    data = request.get_json()
+
+    error = validate_expense_data(data, partial=True)
+    if error: return {"error":error}, 400
+    
+    expense = update_expense_by_id(id, data)
+    if not expense: return {"error":"Expense not found"}, 404
+    
+    return expense, 200

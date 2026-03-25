@@ -1,32 +1,29 @@
-from flask import Blueprint, request
+from flask import Blueprint
+from app.controllers.expense_controller import *
 
-from app.controllers import expense_controller
-
+# Route layer:
+# - Define HTTP endpoints.
+# - Parse request input.
+# - Forward work to controllers.
 expense_bp = Blueprint("expenses", __name__)
-
-
-@expense_bp.get("/expenses")
-def list_expenses():
-	return expense_controller.list_expenses()
-
-
-@expense_bp.get("/expenses/<int:expense_id>")
-def get_expense(expense_id: int):
-	return expense_controller.get_expense(expense_id)
-
-
-@expense_bp.post("/expenses")
+@expense_bp.route("/expenses",methods=["POST"])
 def create_expense():
-	payload = request.get_json(force=True, silent=False) or {}
-	return expense_controller.create_expense(payload)
+    return add_expense()
 
+# TODO: Add expense API routes.
 
-@expense_bp.put("/expenses/<int:expense_id>")
-def update_expense(expense_id: int):
-	payload = request.get_json(force=True, silent=False) or {}
-	return expense_controller.update_expense(expense_id, payload)
+@expense_bp.route("/expenses",methods=["GET"])
+def fetch_expenses():
+    return get_expenses()
 
+@expense_bp.route("/expense/<int:id>",methods=["GET"])
+def fetch_expense(id): # never use the same name as imported func
+    return get_expense(id)
 
-@expense_bp.delete("/expenses/<int:expense_id>")
-def delete_expense(expense_id: int):
-	return expense_controller.delete_expense(expense_id)
+@expense_bp.route("/expense/<int:id>",methods=["DELETE"])
+def remove_expense(id):
+    return delete_expense(id)
+
+@expense_bp.route("/expense/<int:id>", methods=["PUT"])
+def edit_expense(id):
+    return update_expense(id)

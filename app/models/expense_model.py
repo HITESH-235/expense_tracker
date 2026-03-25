@@ -1,18 +1,38 @@
-from datetime import datetime, date
+"""Model layer.
+
+Responsibility:
+- Define SQLAlchemy models and table structure.
+
+TODO:
+- Add Expense model fields and metadata.
+"""
 
 from app.db.database import db
 
+# CREATE TABLE expenses (
+#     id INTEGER PRIMARY KEY,
+#     amount FLOAT NOT NULL,
+#     category VARCHAR(50) NOT NULL,
+#     date VARCHAR(20) NOT NULL
+# );
 
-class Expense(db.Model):
-	__tablename__ = "expenses"
+# the Expense class inherits from the db.Model class, 
+# which already has a constructor that accepts keyword args, not ordered args
+# the primary key isnt given as argument, can create conflicts, automatically handled
+# e.g. x = Expense(amount=500, category="food", date="05-03-2026") 
 
-	id = db.Column(db.Integer, primary_key=True)
-	title = db.Column(db.String(255), nullable=False)
-	amount = db.Column(db.Numeric(10, 2), nullable=False)
-	category = db.Column(db.String(100), nullable=True)
-	notes = db.Column(db.Text, nullable=True)
-	expense_date = db.Column(db.Date, nullable=False, default=date.today)
-	created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+class Expense(db.Model): # == CREATE TABLE expenses (...);
+    __tablename__ = "expenses" # sets actual db table name
 
-	def __repr__(self) -> str:  # pragma: no cover - debug helper
-		return f"<Expense {self.id} {self.title} {self.amount}>"
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Float, nullable=False) # cant be empty
+    category = db.Column(db.String(50), nullable=False) # max length 50 allowed
+    date = db.Column(db.String(20), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id" : self.id,
+            "amount" : self.amount,
+            "category": self.category,
+            "date": self.date
+        }
