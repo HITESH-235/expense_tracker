@@ -31,7 +31,8 @@ def add_expense():
 
 
 def get_expenses():
-    expenses = get_all_expenses()
+    filters = request.args.to_dict()
+    expenses = get_all_expenses(filters)
     return [e.to_dict() for e in expenses], 200
 
 
@@ -60,4 +61,4 @@ def update_expense(id):
     expense = update_expense_by_id(id, data)
     if not expense: return {"error":"Expense not found"}, 404
     
-    return expense, 200
+    return expense.to_dict(), 200

@@ -1,4 +1,4 @@
-# the partial arg is passed true only when we want all fields to be given from the call
+# the partial arg is true when all fields arent necessary
 def validate_expense_data(data, partial=False):
     if not data:
         return "Invalid JSON"
@@ -13,17 +13,17 @@ def validate_expense_data(data, partial=False):
         return "Amount is required"
     
     if "category" in data:
-        if not data:
+        if not data["category"]:
             return "Category cannot be empty"
     elif not partial:
         return "Category is required"
     
 
-    if "data" in data:
+    if "date" in data:
         if not data["date"]:
             return "Date cannot be empty"
     elif not partial:
-        return "Amount is required"
+        return "Date is required"
     
     return None # the function returns none only when everything is correct
 

@@ -11,8 +11,31 @@ def create_expense(data): # errors already addressed in controller
     db.session.commit()
     return expense
 
-def get_all_expenses(): # no error can be created for this task
-    return Expense.query.all()
+def get_all_expenses(filters): # no error can be created for this task
+    query = Expense.query
+
+    # --- filtering ---
+    if "category" in filters:
+        query = query.filter_by(category=filters["category"])
+    if "min_amount" in filters:
+        query = query.filter(Expense.amount >= float(filters["min_amount"]))
+    if "max_amount" in filters:
+        query = query.filter(Expense.amount <= float(filters["max_amount"]))
+
+
+    # --- sorting ---
+    sort = filters.get("sort") # since we didnt check if sort attrib exists
+    if sort == "amount_asc":
+        query = query.order_by(Expense.amount.asc())
+    elif sort == "amount_desc":
+        query = query.order_by(Expense.amount.desc())
+
+    # if sort == "date_asc": # since date is string, this does not work as intende
+    #     query = query.order_by(Expense.date.asc())
+    # if sort == "date_asc":
+    #     query = query.order_by(Expense.date.desc())
+
+    return query.all() # no query, no filtering
 
 def get_expense_by_id(id): # the get statement itself returns None
     return Expense.query.get(id)
