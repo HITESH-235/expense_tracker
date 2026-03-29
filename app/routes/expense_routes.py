@@ -27,3 +27,11 @@ def remove_expense(id):
 @expense_bp.route("/expense/<int:id>", methods=["PUT"])
 def edit_expense(id):
     return update_expense(id)
+
+@expense_bp.route("/expenses/total", methods=["GET"])
+def total_expense():
+    return get_total()
+
+@expense_bp.route("/expenses/summary", methods=["GET"])
+def summary():
+    return get_summary()

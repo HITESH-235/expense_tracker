@@ -1,5 +1,6 @@
 from app.models.expense_model import Expense
 from app.db.database import db
+from sqlalchemy import func
 
 def create_expense(data): # errors already addressed in controller
     expense = Expense( # or just do Expense(**data)
@@ -59,3 +60,14 @@ def update_expense_by_id(id, data): # check for each col(arg) explicitly
 
     db.session.commit()
     return expense
+
+def get_total_expense():
+    total = db.session.query(func.sum(Expense.amount)).scalar()
+    return total or 0
+
+def get_category_summary():
+    res = db.session.query(
+        Expense.category, 
+        func.sum(Expense.amount)
+    ).group_by(Expense.category).all()
+    return {category:amount for category, amount in res}

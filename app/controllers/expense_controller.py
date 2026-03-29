@@ -16,7 +16,9 @@ from app.services.expense_service import (
     get_all_expenses, 
     get_expense_by_id, 
     delete_expense_by_id, 
-    update_expense_by_id
+    update_expense_by_id,
+    get_total_expense,
+    get_category_summary
 )
 
 def add_expense():
@@ -62,3 +64,11 @@ def update_expense(id):
     if not expense: return {"error":"Expense not found"}, 404
     
     return expense.to_dict(), 200
+
+def get_total():
+    total = get_total_expense()
+    return {"total":total}, 200
+
+def get_summary():
+    summary = get_category_summary()
+    return summary, 200
