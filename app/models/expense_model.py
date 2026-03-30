@@ -1,12 +1,4 @@
-"""Model layer.
-
-Responsibility:
-- Define SQLAlchemy models and table structure.
-
-TODO:
-- Add Expense model fields and metadata.
-"""
-
+import enum
 from app.db.database import db
 
 # CREATE TABLE expenses (
@@ -21,21 +13,36 @@ from app.db.database import db
 # the primary key isnt given as argument, can create conflicts, automatically handled
 # e.g. x = Expense(amount=500, category="food", date="05-03-2026") 
 
+
+class CategoryEnum(enum.Enum):
+    FOOD = "Food"
+    TRANSPORT = "Transport"
+    RENT = "Rent"
+    ENTERTAINMENT = "Entertainment"
+    UTILITIES = "Utilities"
+    OTHER = "Other"
+
+
 class Expense(db.Model): # == CREATE TABLE expenses (...);
     __tablename__ = "expenses" # sets actual db table name
 
     id = db.Column(db.Integer, primary_key=True)
     amount = db.Column(db.Float, nullable=False) # cant be empty
-    category = db.Column(db.String(50), nullable=False) # max length 50 allowed
+
+    # only allow values that exist inside the CategoryEnum class
+    category = db.Column(db.Enum(CategoryEnum), nullable=False, default=CategoryEnum.OTHER)
+
     date = db.Column(db.Date, nullable=False)
+    description = db.Column(db.String(255), nullable=True)
 
     def to_dict(self):
         return {
             "id" : self.id,
             "amount" : self.amount,
-            "category": self.category,
+            "category": self.category.value if hasattr(self.category, 'value') else self.category,
             # converting date obj back to a string for JSON(frontend) using strftime (date to str)
-            "date": self.date.strftime('%Y-%m-%d') if self.date else None # goes like 2026-03-06
+            "date": self.date.strftime('%Y-%m-%d') if self.date else None, # goes like "2026-03-06"
+            "description": self.description
         }
     
 # convert string to date obj: strptime (string + pattern)

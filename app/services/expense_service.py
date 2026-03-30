@@ -1,4 +1,4 @@
-from app.models.expense_model import Expense
+from app.models.expense_model import Expense, CategoryEnum
 from app.db.database import db
 from sqlalchemy import func, extract
 from datetime import datetime
@@ -9,8 +9,9 @@ def create_expense(data): # errors already addressed in controller
 
     expense = Expense( # or just do Expense(**data)
         amount = data["amount"],
-        category = data["category"],
-        date = date_obj
+        category = CategoryEnum(data["category"]),
+        date = date_obj,
+        description = data.get("description") # add only if exists
     )
     db.session.add(expense)
     db.session.commit()
@@ -22,7 +23,7 @@ def get_all_expenses(filters): # no error can be created for this task
 
     # --- filtering ---
     if "category" in filters:
-        query = query.filter_by(category=filters["category"])
+        query = query.filter_by(category=CategoryEnum(filters["category"]))
     if "min_amount" in filters:
         query = query.filter(Expense.amount >= float(filters["min_amount"]))
     if "max_amount" in filters:
@@ -62,9 +63,11 @@ def update_expense_by_id(id, data): # check for each col(arg) explicitly
 
     if not expense: return None
     if "amount" in data: expense.amount = float(data["amount"])
-    if "category" in data: expense.category = data["category"]
+    if "category" in data: expense.category = CategoryEnum(data["category"])
     if "date" in data: 
         expense.date = datetime.strptime(data["date"], "%Y-%m-%d").date()
+    if "description" in data:
+        expense.description = data["description"]
 
     db.session.commit()
     return expense
@@ -80,15 +83,15 @@ def get_category_summary():
         Expense.category, 
         func.sum(Expense.amount)
     ).group_by(Expense.category).all()
-    return {category:amount for category, amount in res}
+    return {category.value:amount for category, amount in res}
 
 
 # monthly expense chart
 def get_monthly_expense_summary():
     res = db.session.query(
-        extract('year', Expense.date).label('year'),
-        extract('month', Expense.date).label('month'),
-        func.sum(Expense.amount)
+        extract('year', Expense.date).label('year'), # first element
+        extract('month', Expense.date).label('month'), # second
+        func.sum(Expense.amount) # third
     ).group_by('year', 'month').order_by('year', 'month').all()
 
     return [{

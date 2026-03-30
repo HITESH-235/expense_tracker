@@ -46,6 +46,6 @@ def monthly_expense():
     return get_monthly_summary()
 
 
-@expense_bp.route("/expenses/summary/meekly", methods=["GET"])
+@expense_bp.route("/expenses/summary/weekly", methods=["GET"])
 def weekly_expense():
     return get_weekly_summary()
