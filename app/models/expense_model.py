@@ -27,12 +27,17 @@ class Expense(db.Model): # == CREATE TABLE expenses (...);
     id = db.Column(db.Integer, primary_key=True)
     amount = db.Column(db.Float, nullable=False) # cant be empty
     category = db.Column(db.String(50), nullable=False) # max length 50 allowed
-    date = db.Column(db.String(20), nullable=False)
+    date = db.Column(db.Date, nullable=False)
 
     def to_dict(self):
         return {
             "id" : self.id,
             "amount" : self.amount,
             "category": self.category,
-            "date": self.date
+            # converting date obj back to a string for JSON(frontend) using strftime (date to str)
+            "date": self.date.strftime('%Y-%m-%d') if self.date else None # goes like 2026-03-06
         }
+    
+# convert string to date obj: strptime (string + pattern)
+# x = datetime.strptime("2026-03-29", "%Y-%m-%d").date()
+# print(x.year + " " + x.month + " " + x.date) => 2026 03 29

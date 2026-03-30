@@ -18,11 +18,15 @@ from app.services.expense_service import (
     delete_expense_by_id, 
     update_expense_by_id,
     get_total_expense,
-    get_category_summary
+    get_category_summary,
+    get_monthly_expense_summary,
+    get_weekly_expense_summary,
 )
 
 def add_expense():
-    data = request.get_json()
+    data = request.get_json(silent=True) # silent keyword stops crashing when no json
+
+    if data is None: return {"error":"Request body must be JSON"}, 400
     
     # none if no errors, else holds error message
     error = validate_expense_data(data)
@@ -51,24 +55,38 @@ def delete_expense(id):
 
     if not res: return {"error":"Expense not found"}, 404
         
-    return {"message":"Expense deleted"}, 200
+    return "", 204 # code for no content return (yet successful) 
 
 
 def update_expense(id):
-    data = request.get_json()
+    data = request.get_json(silent=True)
+
+    if data is None: return {"error":"Request body must be JSON"}, 400
 
     error = validate_expense_data(data, partial=True)
     if error: return {"error":error}, 400
-    
+
     expense = update_expense_by_id(id, data)
     if not expense: return {"error":"Expense not found"}, 404
-    
+
     return expense.to_dict(), 200
+
 
 def get_total():
     total = get_total_expense()
     return {"total":total}, 200
 
+
 def get_summary():
     summary = get_category_summary()
     return summary, 200
+
+
+def get_monthly_summary():
+    data = get_monthly_expense_summary()
+    return data, 200
+
+
+def get_weekly_summary():
+    data = get_weekly_expense_summary()
+    return data, 200
