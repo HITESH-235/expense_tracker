@@ -52,12 +52,12 @@ def get_all_expenses(filters, user_id):
     return query.all() # execute the final built query
 
 
-def get_expense_by_id(id): # returns the expense if exists else none
-    return Expense.query.get(id)
+def get_expense_by_id(id, user_id): # returns the expense if exists else none
+    return Expense.query.filter_by(id=id,user_id=user_id).first()
 
 
-def delete_expense_by_id(id):
-    expense = Expense.query.get(id)
+def delete_expense_by_id(id, user_id):
+    expense = Expense.query.filter_by(id=id,user_id=user_id).first()
     if not expense: return None # cant delete if not existing, return falsy
 
     db.session.delete(expense)
@@ -65,8 +65,8 @@ def delete_expense_by_id(id):
     return True
 
 
-def update_expense_by_id(id, data): # check for each col(arg) explicitly
-    expense = Expense.query.get(id)
+def update_expense_by_id(id, data, user_id): # check for each col(arg) explicitly
+    expense = Expense.query.filter_by(id=id,user_id=user_id).first()
 
     if not expense: return None
     # only update fields that are actually provided in the request
@@ -84,30 +84,36 @@ def update_expense_by_id(id, data): # check for each col(arg) explicitly
 # --- Analytics Functions ---
 # uses sql aggregate funcs to do math at the server side
 
-def get_total_expense():
+def get_total_expense(user_id):
     # .scalar() returns the single numeric result of the sum
-    total = db.session.query(func.sum(Expense.amount)).scalar()
+    total = db.session\
+            .query(func.sum(Expense.amount))\
+            .filter_by(user_id=user_id)\
+            .scalar()
     return total or 0
 
 
-def get_category_summary():
+def get_category_summary(user_id):
     # here group_by will allow to see totals for each category like Food, Rent.. 
     res = db.session.query(
         Expense.category, 
         func.sum(Expense.amount)
-    ).group_by(Expense.category).all()
+    ).filter_by(user_id=user_id).group_by(Expense.category).all()
     # returns a dict for the frontend
     return {category.value:amount for category, amount in res}
 
 
 # monthly expense chart
-def get_monthly_expense_summary():
+def get_monthly_expense_summary(user_id):
     # extracts specific parts (year/month) out of a date column
     res = db.session.query(
         extract('year', Expense.date).label('year'), # first element
         extract('month', Expense.date).label('month'), # second
         func.sum(Expense.amount) # third
-    ).group_by('year', 'month').order_by('year', 'month').all()
+    )\
+    .filter_by(user_id=user_id)\
+    .group_by('year', 'month')\
+    .order_by('year', 'month').all()
 
     return [{
         'year': int(year),
@@ -116,12 +122,15 @@ def get_monthly_expense_summary():
     } for year, month, total in res ]
 
 
-def get_weekly_expense_summary():
+def get_weekly_expense_summary(user_id):
     res = db.session.query(
         extract('year', Expense.date).label('year'),
         extract('week', Expense.date).label('week'),
         func.sum(Expense.amount)
-    ).group_by('year', 'week').order_by('year', 'week').all()
+    )\
+    .filter_by(user_id=user_id)\
+    .group_by('year', 'week')\
+    .order_by('year', 'week').all()
 
     return [
         {

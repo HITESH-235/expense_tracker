@@ -21,7 +21,7 @@ def signup():
         return {"error":error}, 400
     
     # on success return the user data (returned from service lyaer)
-    return {"message":"User required successfully", "user":user.to_dict()}, 201
+    return {"message":"User added successfully", "user":user.to_dict()}, 201
 
 def login():
     data = request.get_json()

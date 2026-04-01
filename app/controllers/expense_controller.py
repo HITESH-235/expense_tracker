@@ -40,23 +40,25 @@ def get_expenses():
     # return as list but with each element as dictionary
     return [e.to_dict() for e in expenses], 200
 
-
+@jwt_required()
 def get_expense(id):
-    expense = get_expense_by_id(id)
+    current_user_id = get_jwt_identity() # Get the ID
+    expense = get_expense_by_id(id, current_user_id)
     if not expense: return {"error":"Expense not found"}, 404
     
     return expense.to_dict(), 200
 
-
-def delete_expense(id):
-    res = delete_expense_by_id(id) # returns none if not found
+@jwt_required()
+def delete_expense(id): 
+    current_user_id = get_jwt_identity() # Get the ID
+    res = delete_expense_by_id(id, current_user_id) # returns none if not found
 
     if not res: return {"error":"Expense not found"}, 404
-        
+
     # 204 is when action is successful, but no msg is req in response (like for deletion)
     return "", 204
 
-
+@jwt_required()
 def update_expense(id):
     data = request.get_json(silent=True)
 
@@ -66,30 +68,35 @@ def update_expense(id):
     error = validate_expense_data(data, partial=True) # if cant update returns err msg
     if error: return {"error":error}, 400
 
-    expense = update_expense_by_id(id, data)
+    current_user_id = get_jwt_identity() # Get the ID
+    expense = update_expense_by_id(id, data, current_user_id)
     if not expense: return {"error":"Expense not found"}, 404
-
     return expense.to_dict(), 200
 
 
 # --- Analytics Controllers ---
 # simply fetches the calculated data from the service layer and return it in json
 
+@jwt_required()
 def get_total():
-    total = get_total_expense()
+    current_user_id = get_jwt_identity()
+    total = get_total_expense(current_user_id)
     return {"total":total}, 200
 
-
+@jwt_required()
 def get_summary():
-    summary = get_category_summary()
+    current_user_id = get_jwt_identity()
+    summary = get_category_summary(current_user_id)
     return summary, 200
 
-
+@jwt_required()
 def get_monthly_summary():
-    data = get_monthly_expense_summary()
+    current_user_id = get_jwt_identity() 
+    data = get_monthly_expense_summary(current_user_id) 
     return data, 200
 
-
+@jwt_required() 
 def get_weekly_summary():
-    data = get_weekly_expense_summary()
+    current_user_id = get_jwt_identity() 
+    data = get_weekly_expense_summary(current_user_id) 
     return data, 200
