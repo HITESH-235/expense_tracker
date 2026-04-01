@@ -1,3 +1,6 @@
+# Model defines how the expenses are stored
+# here a user has one to many relationship, meaning one user can have many expenses
+
 import enum
 from app.db.database import db
 
@@ -13,7 +16,8 @@ from app.db.database import db
 # the primary key isnt given as argument, can create conflicts, automatically handled
 # e.g. x = Expense(amount=500, category="food", date="05-03-2026") 
 
-
+# enum class to restrict category values
+# this prevents typos in the database
 class CategoryEnum(enum.Enum):
     FOOD = "Food"
     TRANSPORT = "Transport"
@@ -24,23 +28,35 @@ class CategoryEnum(enum.Enum):
 
 
 class Expense(db.Model): # == CREATE TABLE expenses (...);
-    __tablename__ = "expenses" # sets actual db table name
+    __tablename__ = "expenses" # explicitly naming the table in the db
 
-    id = db.Column(db.Integer, primary_key=True)
-    amount = db.Column(db.Float, nullable=False) # cant be empty
+    # defining the Table Columns:
+    id = db.Column(db.Integer, primary_key=True) # unique ID for every expense
+    amount = db.Column(db.Float, nullable=False) # cost (cant be empty)
 
-    # only allow values that exist inside the CategoryEnum class
+    # uses the enum defined above
     category = db.Column(db.Enum(CategoryEnum), nullable=False, default=CategoryEnum.OTHER)
 
-    date = db.Column(db.Date, nullable=False)
+    date = db.Column(db.Date, nullable=False) # stores as a python date object
     description = db.Column(db.String(255), nullable=True)
+
+    # Foreign Key: connects this expense to a specific user's id
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # relationship: allows you to access user data from an expense object (e.g., expense.user.username)
+    # creates a virtual column 'expenses' in the user model automatically
+    user = db.relationship('User', backref = db.backref('expenses', lazy=True)) 
 
     def to_dict(self):
         return {
             "id" : self.id,
+            "user_id" : self.user_id,
             "amount" : self.amount,
+            
+            # extracts the string value from the enum (e.g. "Food")
             "category": self.category.value if hasattr(self.category, 'value') else self.category,
-            # converting date obj back to a string for JSON(frontend) using strftime (date to str)
+            
+            # formats the data object into a "YYYY-MM-DD" form of string (using strftime)
             "date": self.date.strftime('%Y-%m-%d') if self.date else None, # goes like "2026-03-06"
             "description": self.description
         }
